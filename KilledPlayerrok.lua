@@ -1,18 +1,46 @@
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local CoreGui = game:GetService("CoreGui")
-local Workspace = game:GetService("Workspace")
-local Lighting = game:GetService("Lighting")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ProximityPromptService = game:GetService("ProximityPromptService")
-local HttpService = game:GetService("HttpService")
-local TeleportService = game:GetService("TeleportService")
+--[[
+    KerryHub - Premium Interface & Advanced AutoFarm
+    Integrated with StealAutoFarm Full Engine:
+    - High-Speed Corridor Flight (Z=-360) & Warp Snipe
+    - Desync Godmode & Anti-Ragdoll Bypasses
+    - Guard Strike Bounce & Re-grab Handling
+    - Multi-Zone & Multi-Rarity Targeting Filters (Secret+ Priority)
+    - Auto Place (Every 5 Steals) & Auto Hatch Engine
+    - Auto Treadmill Mount & Tier Upgrade Engine
+    - Auto Speed Trail Purchase & Equip Engine
+    - Ultra Potato Mode & 3D Rendering Disabler
+    - Anti-AFK & Hide "Not Enough Money" UI Alerts
+    - FOREST DROP: Deliver stolen egg to Forest and stop script
+]]--
 
-local LocalPlayer = Players.LocalPlayer
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-local Camera = Workspace.CurrentCamera
+local e=game:GetService( "Players" )
+local r=game:GetService( "Workspace" )
+local y=game:GetService( "RunService" )
+local u=game:GetService( "TweenService" )
+local w=game:GetService( "UserInputService" )
+local j=game:GetService( "ReplicatedStorage" )
+local k=game:GetService( "ProximityPromptService" )
+local a=game:GetService( "HttpService" )
+local TeleportService=game:GetService( "TeleportService" )
+local CoreGui = game:GetService("CoreGui")
+local o=e.LocalPlayer
+local Window=nil
+local currentLang="EN"
+local executorCheckCaller=typeof(checkcaller)=="function" and checkcaller or function() return false end
+local safeNewCClosure=typeof(newcclosure)=="function" and newcclosure or function(fn) return fn end
+local V=game:GetService( "ProximityPromptService" )pcall(function(...) V.PromptButtonHoldBegan :Connect(function(e,...) pcall(function(...)
+            if typeof(fireproximityprompt)== "function" then
+                fireproximityprompt(e)
+            end
+        end
+        )
+    end
+    )
+end
+)
+local PlayerGui = o:WaitForChild("PlayerGui")
+local Camera = r.CurrentCamera
+
 
 local connections = {}
 local parentGui = (pcall(function() return gethui() end) and gethui()) or CoreGui
@@ -100,19 +128,19 @@ local function Notify(title, message, duration)
     
     NotifFrame.Parent = NotificationContainer
     
-    TweenService:Create(NotifFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {BackgroundTransparency = 0.05, Position = UDim2.new(0, 0, 0, 0)}):Play()
-    TweenService:Create(UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Transparency = 0.4}):Play()
-    TweenService:Create(AccentLine, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play()
-    TweenService:Create(TitleLabel, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
-    TweenService:Create(DescLabel, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
+    u:Create(NotifFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {BackgroundTransparency = 0.05, Position = UDim2.new(0, 0, 0, 0)}):Play()
+    u:Create(UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Transparency = 0.4}):Play()
+    u:Create(AccentLine, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play()
+    u:Create(TitleLabel, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
+    u:Create(DescLabel, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
     
     task.delay(duration, function()
         if NotifFrame and NotifFrame.Parent then
-            local tweenOut = TweenService:Create(NotifFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {BackgroundTransparency = 1, Position = UDim2.new(1, 40, 0, 0)})
-            TweenService:Create(UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {Transparency = 1}):Play()
-            TweenService:Create(AccentLine, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {BackgroundTransparency = 1}):Play()
-            TweenService:Create(TitleLabel, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {TextTransparency = 1}):Play()
-            TweenService:Create(DescLabel, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {TextTransparency = 1}):Play()
+            local tweenOut = u:Create(NotifFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {BackgroundTransparency = 1, Position = UDim2.new(1, 40, 0, 0)})
+            u:Create(UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {Transparency = 1}):Play()
+            u:Create(AccentLine, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {BackgroundTransparency = 1}):Play()
+            u:Create(TitleLabel, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {TextTransparency = 1}):Play()
+            u:Create(DescLabel, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {TextTransparency = 1}):Play()
             tweenOut:Play()
             tweenOut.Completed:Connect(function()
                 NotifFrame:Destroy()
@@ -129,11 +157,11 @@ local function HookPrompt(prompt)
     end
 end
 
-for _, descendant in ipairs(Workspace:GetDescendants()) do
+for _, descendant in ipairs(r:GetDescendants()) do
     HookPrompt(descendant)
 end
 
-table.insert(connections, Workspace.DescendantAdded:Connect(function(descendant)
+table.insert(connections, r.DescendantAdded:Connect(function(descendant)
     HookPrompt(descendant)
 end))
 
@@ -210,14 +238,14 @@ CloseCorner.CornerRadius = UDim.new(0, 6)
 CloseCorner.Parent = CloseButton
 
 CloseButton.MouseEnter:Connect(function()
-    TweenService:Create(CloseButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(220, 60, 60), TextColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0}):Play()
+    u:Create(CloseButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(220, 60, 60), TextColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0}):Play()
 end)
 CloseButton.MouseLeave:Connect(function()
-    TweenService:Create(CloseButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(32, 32, 42), TextColor3 = Color3.fromRGB(200, 200, 215), BackgroundTransparency = 0}):Play()
+    u:Create(CloseButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(32, 32, 42), TextColor3 = Color3.fromRGB(200, 200, 215), BackgroundTransparency = 0}):Play()
 end)
 
 CloseButton.MouseButton1Click:Connect(function()
-    local twOpen = TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {Size = UDim2.new(0, 620, 0, 420), BackgroundTransparency = 1})
+    local twOpen = u:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {Size = UDim2.new(0, 620, 0, 420), BackgroundTransparency = 1})
     twOpen:Play()
     twOpen.Completed:Connect(function()
         ScreenGui:Destroy()
@@ -294,7 +322,7 @@ table.insert(connections, TopBar.InputChanged:Connect(function(input)
     end
 end))
 
-table.insert(connections, UserInputService.InputChanged:Connect(function(input)
+table.insert(connections, w.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
         local delta = input.Position - dragStart
         MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
@@ -378,13 +406,13 @@ local function CreateCategory(name, iconId)
 
     table.insert(connections, CategoryButton.MouseEnter:Connect(function()
         if currentCategory ~= name then
-            TweenService:Create(CategoryButton, TweenInfo.new(0.2), {BackgroundTransparency = 0.5}):Play()
+            u:Create(CategoryButton, TweenInfo.new(0.2), {BackgroundTransparency = 0.5}):Play()
         end
     end))
 
     table.insert(connections, CategoryButton.MouseLeave:Connect(function()
         if currentCategory ~= name then
-            TweenService:Create(CategoryButton, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+            u:Create(CategoryButton, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
         end
     end))
 
@@ -392,13 +420,13 @@ local function CreateCategory(name, iconId)
         for catName, catData in pairs(categories) do
             if catName == name then
                 catData.Page.Visible = true
-                TweenService:Create(catData.Button, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
+                u:Create(catData.Button, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
                 catData.Icon.ImageColor3 = Color3.fromRGB(140, 90, 255)
                 catData.Label.TextColor3 = Color3.fromRGB(255, 255, 255)
                 currentCategory = name
             else
                 catData.Page.Visible = false
-                TweenService:Create(catData.Button, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+                u:Create(catData.Button, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
                 catData.Icon.ImageColor3 = Color3.fromRGB(150, 150, 165)
                 catData.Label.TextColor3 = Color3.fromRGB(150, 150, 165)
             end
@@ -499,8 +527,8 @@ local function AddToggle(parentPage, title, description, defaultState, callback)
         local targetColor = toggled and Color3.fromRGB(130, 85, 255) or Color3.fromRGB(40, 40, 52)
         local targetPos = toggled and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
         
-        TweenService:Create(SwitchBg, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {BackgroundColor3 = targetColor}):Play()
-        TweenService:Create(SwitchKnob, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = targetPos}):Play()
+        u:Create(SwitchBg, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {BackgroundColor3 = targetColor}):Play()
+        u:Create(SwitchKnob, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = targetPos}):Play()
         
         if not noCallback and callback then
             pcall(function() callback(toggled) end)
@@ -615,13 +643,13 @@ local function AddSlider(parentPage, title, min, max, default, callback)
         end
     end))
 
-    table.insert(connections, UserInputService.InputChanged:Connect(function(input)
+    table.insert(connections, w.InputChanged:Connect(function(input)
         if sliding and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             UpdateSlider(input)
         end
     end))
 
-    table.insert(connections, UserInputService.InputEnded:Connect(function(input)
+    table.insert(connections, w.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             sliding = false
         end
@@ -687,11 +715,11 @@ local function AddButton(parentPage, title, description, callback)
     ClickButton.Parent = ButtonContainer
 
     table.insert(connections, ClickButton.MouseEnter:Connect(function()
-        TweenService:Create(ButtonContainer, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(34, 34, 46)}):Play()
+        u:Create(ButtonContainer, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(34, 34, 46)}):Play()
     end))
 
     table.insert(connections, ClickButton.MouseLeave:Connect(function()
-        TweenService:Create(ButtonContainer, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(24, 24, 32)}):Play()
+        u:Create(ButtonContainer, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(24, 24, 32)}):Play()
     end))
 
     table.insert(connections, ClickButton.MouseButton1Click:Connect(function()
@@ -790,7 +818,7 @@ local function AddDropdown(parentPage, title, options, defaultOption, callback)
                 selected = opt
                 SelectedBtn.Text = tostring(selected) .. "  ▼"
                 isExpanded = false
-                TweenService:Create(DropdownContainer, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 48)}):Play()
+                u:Create(DropdownContainer, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 48)}):Play()
                 ListHolder.Size = UDim2.new(1, -30, 0, 0)
                 if callback then pcall(function() callback(selected) end) end
             end)
@@ -804,9 +832,9 @@ local function AddDropdown(parentPage, title, options, defaultOption, callback)
         if isExpanded then
             local listHeight = math.clamp(#options * 32, 32, 130)
             ListHolder.Size = UDim2.new(1, -30, 0, listHeight)
-            TweenService:Create(DropdownContainer, TweenInfo.new(0.25), {Size = UDim2.new(1, 0, 0, 52 + listHeight)}):Play()
+            u:Create(DropdownContainer, TweenInfo.new(0.25), {Size = UDim2.new(1, 0, 0, 52 + listHeight)}):Play()
         else
-            TweenService:Create(DropdownContainer, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 48)}):Play()
+            u:Create(DropdownContainer, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 48)}):Play()
             ListHolder.Size = UDim2.new(1, -30, 0, 0)
         end
     end)
@@ -954,9 +982,9 @@ local function AddMultiDropdown(parentPage, title, options, selectedMap, callbac
         if isExpanded then
             local listHeight = math.clamp(#options * 32, 32, 140)
             ListHolder.Size = UDim2.new(1, -30, 0, listHeight)
-            TweenService:Create(DropdownContainer, TweenInfo.new(0.25), {Size = UDim2.new(1, 0, 0, 52 + listHeight)}):Play()
+            u:Create(DropdownContainer, TweenInfo.new(0.25), {Size = UDim2.new(1, 0, 0, 52 + listHeight)}):Play()
         else
-            TweenService:Create(DropdownContainer, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 48)}):Play()
+            u:Create(DropdownContainer, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 48)}):Play()
             ListHolder.Size = UDim2.new(1, -30, 0, 0)
         end
     end)
@@ -983,7 +1011,7 @@ local currentSpeedValue = 16
 local speedToggleRef = nil
 
 local function TriggerAntiCheatBypass(silent)
-    local character = LocalPlayer.Character
+    local character = o.Character
     if character then
         local humanoid = character:FindFirstChildOfClass("Humanoid")
         local rootPart = character:FindFirstChild("HumanoidRootPart")
@@ -1004,25 +1032,25 @@ local function TriggerAntiCheatBypass(silent)
     return false
 end
 
-table.insert(connections, RunService.RenderStepped:Connect(function(dt)
+table.insert(connections, y.RenderStepped:Connect(function(dt)
     if tpWalkEnabled then
-        local character = LocalPlayer.Character
+        local character = o.Character
         if character then
             local rootPart = character:FindFirstChild("HumanoidRootPart")
             if rootPart then
-                local cam = Workspace.CurrentCamera
+                local cam = r.CurrentCamera
                 local moveDir = Vector3.zero
                 
-                if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                if w:IsKeyDown(Enum.KeyCode.W) then
                     moveDir = moveDir + cam.CFrame.LookVector
                 end
-                if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                if w:IsKeyDown(Enum.KeyCode.S) then
                     moveDir = moveDir - cam.CFrame.LookVector
                 end
-                if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                if w:IsKeyDown(Enum.KeyCode.A) then
                     moveDir = moveDir - cam.CFrame.RightVector
                 end
-                if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                if w:IsKeyDown(Enum.KeyCode.D) then
                     moveDir = moveDir + cam.CFrame.RightVector
                 end
                 
@@ -1056,7 +1084,7 @@ AddButton(movementPage, "AntiCheat Bypass", "Deletes Humanoid to bypass checks w
 end)
 
 AddButton(playerPage, "Reset Character", "Teleports character deep into void to trigger server reset", function()
-    local character = LocalPlayer.Character
+    local character = o.Character
     if character then
         local humanoid = character:FindFirstChildOfClass("Humanoid")
         if not humanoid then
@@ -2946,7 +2974,7 @@ R4=function(e,r,y,u,...)
     return wk(e,r,y,u)
 end
 
--- [FOREST DROP] Destination in the Forest start zone (adjust if needed)
+-- [FOREST DROP] Destination in Forest start zone (adjust if needed)
 local FOREST_TARGET = Vector3.new(600, 70, -360)
 local forestDropMode = false
 
@@ -4740,7 +4768,7 @@ local Ck=os.clock ()task.spawn (function(...)
                                     pcall(u4)
                                     if h.autoGlide then
                                         h.statusText = "[AutoSteal] Secured! Tweening to Safe Line X=525..." H( "[AutoSteal] Egg secured after Guard Strike! Returning smoothly to Safe Line X=525 along Z=-360..." )
-                                        -- [FOREST DROP] Route to Forest when Forest mode is on
+                                        -- [FOREST DROP] Route to Forest if enabled
                                         if forestDropMode then Q4Forest(h.glideSpeed, u) else Q4(h.glideSpeed ,u) end
                                         pcall(u4)
                                         local r=y4()h.statusText =string.format ( "Stashed in Bag (%d Eggs). Next steal..." ,r)H(string.format ( "[AutoSteal] Egg stashed in bag (%d total eggs). Hands-Free ready for next steal..." ,r))
@@ -4811,7 +4839,7 @@ local qk=os.clock ()task.spawn (function(...)
                                 pcall(u4)
                                 if h.autoGlide then
                                     h.statusText = "[SnipeLoop] Target secured! Tweening to Safe Line X=525..."
-                                    -- [FOREST DROP] Route to Forest when Forest mode is on
+                                    -- [FOREST DROP] Route to Forest if enabled
                                     if forestDropMode then Q4Forest(h.glideSpeed, r) else Q4(h.glideSpeed ,r) end
                                     pcall(u4)
                                     local y=y4()h.statusText =string.format ( "Stashed in Bag (%d Eggs). Next snipe..." ,y)H(string.format ( "[SnipeLoop] Egg stashed in bag (%d total eggs). Hands-Free ready for next snipe..." ,y))
@@ -5172,7 +5200,7 @@ end
         SaveSpeed = Y,
         ZoneList = M,
         RarityList = X,
-        -- [FOREST DROP] External control for Forest delivery mode
+        -- [FOREST DROP] External control
         SetForestDropMode = function(state) forestDropMode = state end,
         SetForestTarget = function(vec) if typeof(vec) == "Vector3" then FOREST_TARGET = vec end end
     }
@@ -5369,7 +5397,7 @@ end)
 AddToggle(settingsPage, "Disable 3D Rendering (GPU Saver)", "Freezes 3D viewport to drop GPU usage to ~1% for overnight farm", h.disable3D == true, function(state)
     h.disable3D = state
     pcall(function()
-        RunService:Set3dRenderingEnabled(not state)
+        y:Set3dRenderingEnabled(not state)
     end)
     AutoFarm.SaveEggSelectConfig(h)
     Notify("Performance", "3D Rendering set to: " .. tostring(not state), 2.5)
@@ -5398,104 +5426,10 @@ AddButton(settingsPage, "Unload Script", "Completely terminate all farm loops an
     AutoFarm.SetFarmMode("NONE")
     AutoFarm.ResetFarmStates()
     pcall(function()
-        RunService:Set3dRenderingEnabled(true)
+        y:Set3dRenderingEnabled(true)
     end)
     if ScreenGui then
         ScreenGui:Destroy()
     end
     Notify("System", "Script Unloaded", 2)
-end)
-
--- ==========================================
--- Custom Sky & Atmosphere System (Toolbox Model Loader)
--- ==========================================
-
-local originalSky = Lighting:FindFirstChildOfClass("Sky")
-if originalSky then
-    originalSky = originalSky:Clone()
-    originalSky.Name = "OriginalGameSky"
-end
-
-local originalAtmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
-if originalAtmosphere then
-    originalAtmosphere = originalAtmosphere:Clone()
-    originalAtmosphere.Name = "OriginalGameAtmosphere"
-end
-
-local originalClouds = Lighting:FindFirstChildOfClass("Clouds")
-if originalClouds then
-    originalClouds = originalClouds:Clone()
-    originalClouds.Name = "OriginalGameClouds"
-end
-
-local skyModels = {
-    ["Default Sky"] = nil,
-    ["Purple Nebula"] = "rbxassetid://13470726759",
-    ["Vaporwave Sun"] = "rbxassetid://13470732890",
-    ["Milky Way Night"] = "rbxassetid://13470742180",
-    ["Anime Sunset"] = "rbxassetid://13470748120",
-    ["Deep Cosmic"] = "rbxassetid://13470753900"
-}
-
-local currentLoadedSkyModel = nil
-
-local function ApplySkyFromModel(assetId)
-    if currentLoadedSkyModel then
-        currentLoadedSkyModel:Destroy()
-        currentLoadedSkyModel = nil
-    end
-
-    for _, v in ipairs(Lighting:GetChildren()) do
-        if v:IsA("Sky") or v:IsA("Atmosphere") then
-            v:Destroy()
-        end
-    end
-
-    if not assetId then
-        if originalSky then originalSky:Clone().Parent = Lighting end
-        if originalAtmosphere then originalAtmosphere:Clone().Parent = Lighting end
-        if originalClouds then originalClouds:Clone().Parent = Lighting end
-        Notify("Visuals", "Original game sky & atmosphere restored", 2)
-        return
-    end
-
-    pcall(function()
-        local objects = game:GetObjects(assetId)
-        if objects and #objects > 0 then
-            local model = objects[1]
-            model.Parent = Lighting
-            currentLoadedSkyModel = model
-
-            local skyFound = false
-            for _, child in ipairs(model:GetDescendants()) do
-                if child:IsA("Sky") then
-                    child.Parent = Lighting
-                    skyFound = true
-                elseif child:IsA("Atmosphere") then
-                    child.Parent = Lighting
-                end
-            end
-
-            if not skyFound then
-                local directSky = model:FindFirstChildOfClass("Sky")
-                if directSky then directSky.Parent = Lighting end
-                local directAtm = model:FindFirstChildOfClass("Atmosphere")
-                if directAtm then directAtm.Parent = Lighting end
-            end
-
-            Notify("Visuals", "Applied custom skybox & atmosphere", 2.5)
-        end
-    end)
-end
-
-AddDropdown(visualsPage, "Skybox Theme", {
-    "Default Sky",
-    "Purple Nebula",
-    "Vaporwave Sun",
-    "Milky Way Night",
-    "Anime Sunset",
-    "Deep Cosmic"
-}, "Default Sky", function(val)
-    local assetId = skyModels[val]
-    ApplySkyFromModel(assetId)
 end)
