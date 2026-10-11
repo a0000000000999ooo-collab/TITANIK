@@ -1,8 +1,7 @@
 --[[
-    KerryHub - Trimmed Edition
+    KerryHub - Trimmed Edition (FIXED)
     ONLY: Auto Steal (Egg) + AntiCheat Bypass
-    Removed: Auto Place, Auto Hatch, Auto Treadmill, Trails,
-             Potato Mode, Anti-AFK, TPWalk, Reset, Visuals
+    Fixed: Lua local scoping for X4 / O4 / Y4 / F4 / G4
 ]]--
 
 local e=game:GetService("Players")
@@ -93,7 +92,6 @@ local function Notify(title,message,duration)
     end)
 end
 
--- Proximity prompt global hook
 local function HookPrompt(prompt)
     if prompt:IsA("ProximityPrompt") then
         prompt.HoldDuration=0
@@ -166,7 +164,6 @@ local ContentContainer=Instance.new("Frame",MainFrame)
 ContentContainer.Size=UDim2.new(1,-176,1,-56); ContentContainer.Position=UDim2.new(0,176,0,56)
 ContentContainer.BackgroundTransparency=1
 
--- Dragging
 local dragging,dragInput,dragStart,startPos
 TopBar.InputBegan:Connect(function(input)
     if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
@@ -187,7 +184,6 @@ w.InputChanged:Connect(function(input)
     end
 end)
 
--- Categories
 local categories={}
 local currentCategory=nil
 local function CreateCategory(name,iconId)
@@ -253,7 +249,6 @@ local autoFarmPage=CreateCategory("Auto Farm","rbxassetid://10709769841")
 local eggFilterPage=CreateCategory("Egg Selection","rbxassetid://10723407874")
 local movementPage=CreateCategory("Movement","rbxassetid://10747373176")
 
--- Components
 local function AddToggle(parentPage,title,description,defaultState,callback)
     local toggled=defaultState or false
     local box=Instance.new("Frame",parentPage)
@@ -444,7 +439,7 @@ local function AddMultiDropdown(parentPage,title,options,selectedMap,callback)
 end
 
 -- ==========================================
--- AutoFarm Module (Steal-only)
+-- AutoFarm Module (Steal-only, FIXED)
 -- ==========================================
 local AutoFarm=(function()
 local e=game:GetService("Players")
@@ -454,7 +449,6 @@ local w=game:GetService("UserInputService")
 local j=game:GetService("ReplicatedStorage")
 local a=game:GetService("HttpService")
 local o=e.LocalPlayer
-local currentLang="EN"
 local safeNewCClosure=typeof(newcclosure)=="function" and newcclosure or function(fn) return fn end
 local V=game:GetService("ProximityPromptService")
 pcall(function()
@@ -498,9 +492,12 @@ end
 
 local i=J("RF/EggWorld/AskFieldEggCarry","AskFieldEggCarry")
 local R=J("RF/EggWorld/AskFieldEggSnapshot","AskFieldEggSnapshot") or J("Eggs: RequestAreaEggSnapshot","RequestAreaEggSnapshot")
-local v=J("RF/Homestead/AskState","RF/Plots/AskState") or J("AskState")
 local P=J("RE/GuardPatrol/ForestStrike","ForestStrike") or (B and B.GuardPatrol and B.GuardPatrol.ForestStrike)
 local N=J("SpeedTollOffer","RE/GuardPatrol/SpeedTollOffer") or (B and B.GuardPatrol and B.GuardPatrol.SpeedTollOffer)
+
+-- Remote sanity check
+warn(string.format("[KerryHub] Remotes -> carry=%s snapshot=%s strike=%s toll=%s",
+    tostring(i~=nil),tostring(R~=nil),tostring(P~=nil),tostring(N~=nil)))
 
 local f={["Light Dark"]=1300,["LightDark"]=1300,["Titan Temple"]=1100,["Cherry Blossom"]=1000,["Cosmic"]=900,
 ["Prehistoric"]=800,["Abyss Ocean"]=700,["Volcano"]=600,["Snow"]=500,["Jungle"]=400,
@@ -513,7 +510,6 @@ local L=-360
 local E=525
 local b=620
 local A=130
-local S=CFrame.new(4773.7587890625,70.392112731934,-315.73501586914)
 
 local Z="DiceHub_FlightSpeed.txt"
 local z="DiceHub_EggSelectConfig.json"
@@ -577,6 +573,7 @@ teleporting=false,isReturning=false,delivering=false,holdingEggForGuard=false,
 currentTargetModel=nil,targetPosition=nil,
 stateTime=os.clock(),statusText="Ready",alive=true}
 
+-- Forward declarations
 local m
 local e4
 local r4
@@ -602,6 +599,13 @@ local i4
 local ek
 local h4
 local Dk
+local wk
+-- ⬇️ FIXED: forwarded scoping for shared state
+local X4={}
+local O4=0
+local Y4="NONE"
+local F4=nil
+local G4=0
 
 m=function(tool)
     if not tool or not tool:IsA("Tool") then return false end
@@ -719,85 +723,6 @@ k4=function(uid)
         end
     end
     return true,"Unchecked"
-end
-
-local m4=false
-ek=function()
-    if m4 then return end
-    local rem=R or j:FindFirstChild("RF/EggWorld/AskFieldEggSnapshot",true) or j:FindFirstChild("AskFieldEggSnapshot",true) or j:FindFirstChild("Eggs: RequestAreaEggSnapshot",true)
-    if not rem or not rem:IsA("RemoteFunction") then return end
-    m4=true
-    task.spawn(function()
-        local ok,res=pcall(function() return rem:InvokeServer() end)
-        if ok and type(res)=="table" then
-            local out={}
-            local rec=res.Records or res
-            if type(rec)=="table" then
-                for k,vv in pairs(rec) do
-                    if type(vv)=="table" then
-                        if not vv.Uid and type(k)=="string" then vv.Uid=k end
-                        table.insert(out,vv)
-                    end
-                end
-            end
-            if #out>0 then F4=out; G4=os.clock() end
-        end
-        m4=false
-    end)
-end
-local F4=nil
-local G4=0
-task.spawn(function()
-    while true do task.wait(1.5); pcall(ek) end
-end)
-h4=function(force)
-    local now=os.clock()
-    if force or (now-G4>=1.5) or not F4 then ek() end
-    local fromF=(F4 and #F4>0) and F4 or nil
-    local fromS=nil
-    if s and s.ReadFieldEggs then
-        local ok,res=pcall(s.ReadFieldEggs)
-        if ok and type(res)=="table" then
-            local out={}
-            local rec=res.Records or res
-            if type(rec)=="table" then
-                for k,vv in pairs(rec) do
-                    if type(vv)=="table" then
-                        if not vv.Uid and type(k)=="string" then vv.Uid=k end
-                        table.insert(out,vv)
-                    end
-                end
-            end
-            if #out>0 then fromS=out end
-        end
-    end
-    local merged={}; local seen={}
-    if fromF then for _,vv in ipairs(fromF) do if vv.Uid then seen[vv.Uid]=true; table.insert(merged,vv) end end end
-    if fromS then for _,vv in ipairs(fromS) do if vv.Uid and not seen[vv.Uid] then seen[vv.Uid]=true; table.insert(merged,vv) end end end
-    local slots=r:FindFirstChild("AreaEggSlotsClient")
-    if slots then
-        for _,ch in ipairs(slots:GetChildren()) do
-            local nm=ch.Name
-            if nm and nm~="" then
-                local cf=ch:GetPivot(); local pos=cf.Position
-                if pos.X>=530 and not string.find(tostring(nm),"FirstArea") then
-                    if not seen[nm] then
-                        seen[nm]=true
-                        table.insert(merged,{Uid=nm,
-                            AssetCategory=ch:GetAttribute("Category") or ch:GetAttribute("AssetCategory") or ch.Name,
-                            AreaId=ch:GetAttribute("AreaId") or ch:GetAttribute("Area"),
-                            Rarity=ch:GetAttribute("Rarity") or ch:GetAttribute("RarityTier"),
-                            Rank=ch:GetAttribute("RarityRank") or ch:GetAttribute("Rank"),
-                            Income=ch:GetAttribute("Income") or ch:GetAttribute("EarningRate"),
-                            AssetScale=ch:GetAttribute("Scale") or ch:GetAttribute("AssetScale") or 1,
-                            Mutations=ch:GetAttribute("Mutations") or ch:GetAttribute("Mutation"),
-                            BoundsCFrame=cf,BottomCFrame=cf,CFrame=cf,State="Slot",PhysicalModel=ch})
-                    end
-                end
-            end
-        end
-    end
-    return merged
 end
 a4=function()
     local _,uid=e4()
@@ -1014,7 +939,6 @@ local function firePrompts(target,pos)
     end
 end
 
--- Zone heuristic
 Dk=function(name,x,z)
     local ux=x and x or 0
     local wl=string.lower(tostring(name or ""))
@@ -1079,7 +1003,6 @@ i4=function()
     return list
 end
 
--- Target selection
 N4=function()
     local list=h4(false)
     if not list or #list==0 then list=h4(true) end
@@ -1179,9 +1102,85 @@ N4=function()
     return cands[1]
 end
 
-local X4={}
+ek=function()
+    if m4 then return end
+    local rem=R or j:FindFirstChild("RF/EggWorld/AskFieldEggSnapshot",true) or j:FindFirstChild("AskFieldEggSnapshot",true) or j:FindFirstChild("Eggs: RequestAreaEggSnapshot",true)
+    if not rem or not rem:IsA("RemoteFunction") then return end
+    m4=true
+    task.spawn(function()
+        local ok,res=pcall(function() return rem:InvokeServer() end)
+        if ok and type(res)=="table" then
+            local out={}
+            local rec=res.Records or res
+            if type(rec)=="table" then
+                for k,vv in pairs(rec) do
+                    if type(vv)=="table" then
+                        if not vv.Uid and type(k)=="string" then vv.Uid=k end
+                        table.insert(out,vv)
+                    end
+                end
+            end
+            if #out>0 then F4=out; G4=os.clock() end
+        end
+        m4=false
+    end)
+end
+local m4=false
 
--- Steal loops
+task.spawn(function()
+    while true do task.wait(1.5); pcall(ek) end
+end)
+
+h4=function(force)
+    local now=os.clock()
+    if force or (now-G4>=1.5) or not F4 then ek() end
+    local fromF=(F4 and #F4>0) and F4 or nil
+    local fromS=nil
+    if s and s.ReadFieldEggs then
+        local ok,res=pcall(s.ReadFieldEggs)
+        if ok and type(res)=="table" then
+            local out={}
+            local rec=res.Records or res
+            if type(rec)=="table" then
+                for k,vv in pairs(rec) do
+                    if type(vv)=="table" then
+                        if not vv.Uid and type(k)=="string" then vv.Uid=k end
+                        table.insert(out,vv)
+                    end
+                end
+            end
+            if #out>0 then fromS=out end
+        end
+    end
+    local merged={}; local seen={}
+    if fromF then for _,vv in ipairs(fromF) do if vv.Uid then seen[vv.Uid]=true; table.insert(merged,vv) end end end
+    if fromS then for _,vv in ipairs(fromS) do if vv.Uid and not seen[vv.Uid] then seen[vv.Uid]=true; table.insert(merged,vv) end end end
+    local slots=r:FindFirstChild("AreaEggSlotsClient")
+    if slots then
+        for _,ch in ipairs(slots:GetChildren()) do
+            local nm=ch.Name
+            if nm and nm~="" then
+                local cf=ch:GetPivot(); local pos=cf.Position
+                if pos.X>=530 and not string.find(tostring(nm),"FirstArea") then
+                    if not seen[nm] then
+                        seen[nm]=true
+                        table.insert(merged,{Uid=nm,
+                            AssetCategory=ch:GetAttribute("Category") or ch:GetAttribute("AssetCategory") or ch.Name,
+                            AreaId=ch:GetAttribute("AreaId") or ch:GetAttribute("Area"),
+                            Rarity=ch:GetAttribute("Rarity") or ch:GetAttribute("RarityTier"),
+                            Rank=ch:GetAttribute("RarityRank") or ch:GetAttribute("Rank"),
+                            Income=ch:GetAttribute("Income") or ch:GetAttribute("EarningRate"),
+                            AssetScale=ch:GetAttribute("Scale") or ch:GetAttribute("AssetScale") or 1,
+                            Mutations=ch:GetAttribute("Mutations") or ch:GetAttribute("Mutation"),
+                            BoundsCFrame=cf,BottomCFrame=cf,CFrame=cf,State="Slot",PhysicalModel=ch})
+                    end
+                end
+            end
+        end
+    end
+    return merged
+end
+
 wk=function(targetPos,speed,uid,session,returnAllowed)
     local ch=o.Character
     local root=ch and ch:FindFirstChild("HumanoidRootPart")
@@ -1280,7 +1279,6 @@ t4=function(targetPos,speed,uid,session)
     return wk(targetPos,speed,uid,session)
 end
 
--- Return to safe line X=525
 s4=function(speed,session)
     local ch=o.Character
     local root=ch and ch:FindFirstChild("HumanoidRootPart")
@@ -1354,7 +1352,6 @@ s4=function(speed,session)
     return true
 end
 
--- Guard Strike cycle
 U4=function(uid,targetCF,targetModel,session)
     local ch=o.Character
     local root=ch and ch:FindFirstChild("HumanoidRootPart")
@@ -1446,7 +1443,6 @@ U4=function(uid,targetCF,targetModel,session)
     return ok
 end
 
--- Warp Snipe
 l4=function(target,session)
     if h.teleporting or h.glidingToTarget or h.delivering or h.securingEgg then return false end
     h.teleporting=true; h.isReturning=false; h.stateTime=os.clock()
@@ -1460,7 +1456,7 @@ l4=function(target,session)
     if not h.godmode then setGodmode(true) end
     antiRagdoll(ch)
     if not target then D4(); return false end
-    local tCF=target.CFrame or S
+    local tCF=target.CFrame
     local uid=target.Uid
     local tPos=tCF.Position
     if uid then
@@ -1468,11 +1464,6 @@ l4=function(target,session)
         if not ok and st~="CarriedBySelf" then
             X4[uid]=os.clock()+5; D4(); return false
         end
-    end
-    local carrying=select(2,e4())
-    if not carrying then
-        h.teleporting=false
-        return false
     end
     h.statusText="[3/7] Pre-streaming Target..."
     pcall(function() o:RequestStreamAroundAsync(tPos) end)
@@ -1488,7 +1479,7 @@ l4=function(target,session)
     task.wait(0.04)
     local startPos=root.Position
     local startY=startPos.Y
-    local strikeUID=select(2,e4()) or carrying
+    local strikeUID=select(2,e4()) or uid
     local bounceSignal=false
     local conn=nil
     if N and N:IsA("RemoteEvent") then
@@ -1566,8 +1557,6 @@ l4=function(target,session)
     return true
 end
 
-local O4=0
-local Y4="NONE"
 T4=function(mode)
     if Y4==mode then return end
     O4=O4+1
@@ -1659,7 +1648,10 @@ task.spawn(function()
                 end
             end
         end)
-        if not ok then pcall(D4) end
+        if not ok then
+            warn("[AutoSteal Loop Error]",tostring(err))
+            pcall(D4)
+        end
         task.wait(0.08)
     end
 end)
@@ -1706,12 +1698,14 @@ task.spawn(function()
                 end
             end
         end)
-        if not ok then pcall(D4) end
+        if not ok then
+            warn("[SnipeLoop Error]",tostring(err))
+            pcall(D4)
+        end
         task.wait(0.08)
     end
 end)
 
--- Heartbeat: anti-void + auto sit correction
 y.Heartbeat:Connect(function()
     local ch=o.Character
     local root=ch and ch:FindFirstChild("HumanoidRootPart")
