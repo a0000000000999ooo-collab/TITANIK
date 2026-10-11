@@ -1,11 +1,3 @@
---[[
-    KerryHub - Trimmed Edition (FIXED + 3 NEW ZONES + TOGGLE + RESIZE)
-    ONLY: Auto Steal (Egg) + AntiCheat Bypass
-    NEW: Enchanted Forest, Angels, Demons zones
-    NEW: Toggle menu (RightShift / drag-able button)
-    NEW: Resizable window (bottom-right corner)
-]]--
-
 local e=game:GetService("Players")
 local r=game:GetService("Workspace")
 local y=game:GetService("RunService")
