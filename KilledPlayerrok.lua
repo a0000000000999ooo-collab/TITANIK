@@ -1,9 +1,3 @@
--- ==========================================
--- AutoFarm Lite | Steal An Egg
--- Tween Steal + Warp Steal + TPWalk + Bypass
--- ==========================================
-
-local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
