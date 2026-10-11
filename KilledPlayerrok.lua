@@ -1,8 +1,9 @@
 --[[
-    KerryHub - Final Edition
+    KerryHub - Final Edition (Anti-Anchored Fix)
     Auto Steal + AntiCheat Bypass
     Safe Zone: Forest (576.7, 70.6, -368.1)
-    Zones: + Angels & Demons (5649.6) + Enchanted Forest (6681.2)
+    Zones: + Angels & Demons + Enchanted Forest
+    Fixed: Boss Anchored-lock, stuck detection on return
     Added: Minimize / Restore Icon
 ]]--
 
@@ -101,7 +102,6 @@ end
 for _,d in ipairs(r:GetDescendants()) do HookPrompt(d) end
 table.insert(connections,r.DescendantAdded:Connect(HookPrompt))
 
--- Forward declarations
 local AutoFarm
 local h
 
@@ -136,7 +136,6 @@ SubtitleLabel.BackgroundTransparency=1; SubtitleLabel.Font=Enum.Font.GothamMediu
 SubtitleLabel.Text="Auto Steal - Safe: Forest"
 SubtitleLabel.TextColor3=Color3.fromRGB(150,150,175); SubtitleLabel.TextSize=11; SubtitleLabel.TextXAlignment=Enum.TextXAlignment.Left
 
--- Close (unload)
 local CloseButton=Instance.new("TextButton",TopBar)
 CloseButton.Size=UDim2.new(0,30,0,30); CloseButton.Position=UDim2.new(1,-40,0,12)
 CloseButton.BackgroundColor3=Color3.fromRGB(32,32,42); CloseButton.AutoButtonColor=false
@@ -146,7 +145,6 @@ Instance.new("UICorner",CloseButton).CornerRadius=UDim.new(0,6)
 CloseButton.MouseEnter:Connect(function() u:Create(CloseButton,TweenInfo.new(0.2),{BackgroundColor3=Color3.fromRGB(220,60,60),TextColor3=Color3.fromRGB(255,255,255)}):Play() end)
 CloseButton.MouseLeave:Connect(function() u:Create(CloseButton,TweenInfo.new(0.2),{BackgroundColor3=Color3.fromRGB(32,32,42),TextColor3=Color3.fromRGB(200,200,215)}):Play() end)
 
--- Minimize
 local MinimizeButton=Instance.new("TextButton",TopBar)
 MinimizeButton.Size=UDim2.new(0,30,0,30); MinimizeButton.Position=UDim2.new(1,-76,0,12)
 MinimizeButton.BackgroundColor3=Color3.fromRGB(32,32,42); MinimizeButton.AutoButtonColor=false
@@ -156,7 +154,6 @@ Instance.new("UICorner",MinimizeButton).CornerRadius=UDim.new(0,6)
 MinimizeButton.MouseEnter:Connect(function() u:Create(MinimizeButton,TweenInfo.new(0.2),{BackgroundColor3=Color3.fromRGB(120,80,255),TextColor3=Color3.fromRGB(255,255,255)}):Play() end)
 MinimizeButton.MouseLeave:Connect(function() u:Create(MinimizeButton,TweenInfo.new(0.2),{BackgroundColor3=Color3.fromRGB(32,32,42),TextColor3=Color3.fromRGB(200,200,215)}):Play() end)
 
--- Floating restore icon
 local RestoreIcon=Instance.new("TextButton",ScreenGui)
 RestoreIcon.Name="RestoreIcon"
 RestoreIcon.Size=UDim2.new(0,55,0,55)
@@ -181,7 +178,6 @@ RestoreIcon.MouseLeave:Connect(function()
     u:Create(RestoreStroke,TweenInfo.new(0.2),{Thickness=2}):Play()
 end)
 
--- Drag restore icon
 do
     local dIcon=false; local dStart; local dPos; local dInput
     RestoreIcon.InputBegan:Connect(function(input)
@@ -209,12 +205,9 @@ do
 end
 
 local isMinimized=false
-local savedFramePos=UDim2.new(0.5,-310,0.5,-210)
-
 local function MinimizeMenu()
     if isMinimized then return end
     isMinimized=true
-    savedFramePos=MainFrame.Position
     u:Create(MainFrame,TweenInfo.new(0.3,Enum.EasingStyle.Quart,Enum.EasingDirection.In),{
         Position=UDim2.new(-1,0,0.5,-210)
     }):Play()
@@ -225,7 +218,6 @@ local function MinimizeMenu()
         u:Create(RestoreIcon,TweenInfo.new(0.35,Enum.EasingStyle.Back,Enum.EasingDirection.Out),{Size=UDim2.new(0,55,0,55)}):Play()
     end)
 end
-
 local function RestoreMenu()
     if not isMinimized then return end
     isMinimized=false
@@ -236,7 +228,6 @@ local function RestoreMenu()
         MainFrame.Visible=true
     end)
 end
-
 MinimizeButton.MouseButton1Click:Connect(MinimizeMenu)
 RestoreIcon.MouseButton1Click:Connect(RestoreMenu)
 CloseButton.MouseButton1Click:Connect(function()
@@ -871,6 +862,7 @@ H4=function(uid)
     end
 end
 
+_G._KerryHubSelfAnchor=false
 if typeof(hookmetamethod)=="function" and not _G._DesyncAntiRagdollHooked then
     _G._DesyncAntiRagdollHooked=true
     local old
@@ -880,6 +872,12 @@ if typeof(hookmetamethod)=="function" and not _G._DesyncAntiRagdollHooked then
             if t:IsA("Humanoid") then
                 if k=="PlatformStand" and v==true then return nil end
                 if k=="Sit" and v==true and (hh.pureTweenFarm or hh.autoFarmLoop or hh.isReturning or hh.glidingToTarget) then return nil end
+            end
+            if t:IsA("BasePart") and k=="Anchored" and v==true and not _G._KerryHubSelfAnchor then
+                local ch=o.Character
+                if ch and t:IsDescendantOf(ch) and (hh.pureTweenFarm or hh.autoFarmLoop) then
+                    return nil
+                end
             end
         end
         return old(t,k,v)
@@ -909,7 +907,6 @@ local function fixJoints(ch)
     end
 end
 local function antiRagdoll(ch)
-    if hh and hh.onTreadmill then return end
     ch=ch or o.Character
     if not ch then return end
     local hb=ch:FindFirstChildOfClass("Humanoid")
@@ -998,7 +995,10 @@ D4=function()
     hh.stateTime=os.clock()
     local ch=o.Character
     local root=ch and ch:FindFirstChild("HumanoidRootPart")
-    if root then pcall(function() root.Anchored=false; root.AssemblyLinearVelocity=Vector3.zero; root.AssemblyAngularVelocity=Vector3.zero end) end
+    if root then pcall(function()
+        if _G._KerryHubSelfAnchor then _G._KerryHubSelfAnchor=false end
+        root.Anchored=false; root.AssemblyLinearVelocity=Vector3.zero; root.AssemblyAngularVelocity=Vector3.zero
+    end) end
     pcall(function() if antiRagdoll and ch then antiRagdoll(ch) end end)
 end
 
@@ -1316,6 +1316,7 @@ wk=function(targetPos,speed,uid,session)
             if hb then hb.AutoRotate=true end
             hh.glidingToTarget=false; return false
         end
+        if root.Anchored then pcall(function() root.Anchored=false end) end
         local pos=root.Position
         local dist=(dest-pos).Magnitude
         local hor=((Vector2.new(pos.X,pos.Z)-Vector2.new(dest.X,dest.Z))).Magnitude
@@ -1394,6 +1395,17 @@ s4=function(speed,session)
     local root=ch and ch:FindFirstChild("HumanoidRootPart")
     local hb=ch and ch:FindFirstChildOfClass("Humanoid")
     if not root then return false end
+    pcall(function()
+        if _G._KerryHubSelfAnchor then _G._KerryHubSelfAnchor=false end
+        root.Anchored=false
+        if hb then
+            if hb.PlatformStand then hb.PlatformStand=false end
+            if hb.Sit then hb.Sit=false end
+            hb:ChangeState(Enum.HumanoidStateType.Running)
+            if hb.WalkSpeed<=0 then hb.WalkSpeed=16 end
+        end
+        antiRagdoll(ch)
+    end)
     if hb then hb.AutoRotate=false end
     local lane=hh.laneZ or SAFE_ZONE_LANE_Z
     local dest=Vector3.new(SAFE_ZONE_X,SAFE_ZONE_Y,lane)
@@ -1406,7 +1418,13 @@ s4=function(speed,session)
     local fast=o4()
     local sp=math.max(speed,fast)
     local deadline=os.clock()+25
+    local lastPos=root.Position
+    local stuckTimer=os.clock()
     while hh.alive and hh.isReturning and os.clock()<deadline do
+        local curCh=o.Character
+        if curCh~=ch then
+            hh.isReturning=false; return false
+        end
         if session and O4~=session then
             if hb then hb.AutoRotate=true end
             hh.isReturning=false; return false
@@ -1415,9 +1433,28 @@ s4=function(speed,session)
             if hb then hb.AutoRotate=true end
             hh.isReturning=false; return false
         end
+        if root.Anchored then pcall(function() root.Anchored=false end) end
+        if hb and hb.PlatformStand then pcall(function() hb.PlatformStand=false; hb:ChangeState(Enum.HumanoidStateType.Running) end) end
         local pos=root.Position
         local dist=(dest-pos).Magnitude
         if dist<=8 then pcall(u4); break end
+        if (pos-lastPos).Magnitude<0.5 then
+            if os.clock()-stuckTimer>1.2 then
+                pcall(function()
+                    root.Anchored=false
+                    if hb then
+                        hb.PlatformStand=false; hb.Sit=false
+                        hb:ChangeState(Enum.HumanoidStateType.Running)
+                        if hb.WalkSpeed<=0 then hb.WalkSpeed=16 end
+                    end
+                    antiRagdoll(ch)
+                end)
+                stuckTimer=os.clock()
+            end
+        else
+            lastPos=pos
+            stuckTimer=os.clock()
+        end
         local dt=y.Heartbeat:Wait()
         pos=root.Position
         local curSp=sp
@@ -1446,9 +1483,15 @@ s4=function(speed,session)
         root.AssemblyAngularVelocity=Vector3.zero
         hh.statusText=trap and string.format("Tweening Forest (Z: %.0f) [DODGING!]",nZ) or string.format("Tweening Forest (%.0f studs | X: %.0f)",dist,pos.X)
     end
-    root.CFrame=CFrame.new(SAFE_ZONE_X,math.max(SAFE_ZONE_Y-2,root.Position.Y),lane)
-    root.AssemblyLinearVelocity=Vector3.zero
-    root.AssemblyAngularVelocity=Vector3.zero
+    pcall(function()
+        local curRoot=o.Character and o.Character:FindFirstChild("HumanoidRootPart")
+        if curRoot then
+            curRoot.Anchored=false
+            curRoot.CFrame=CFrame.new(SAFE_ZONE_X,math.max(SAFE_ZONE_Y-2,curRoot.Position.Y),lane)
+            curRoot.AssemblyLinearVelocity=Vector3.zero
+            curRoot.AssemblyAngularVelocity=Vector3.zero
+        end
+    end)
     if hb then hb.AutoRotate=true end
     pcall(u4)
     hh.isReturning=false
@@ -1483,6 +1526,7 @@ U4=function(uid,targetCF,targetModel,session)
     while not w4() and os.clock()<t1 and hh.alive and hh.securingEgg do
         if session and O4~=session then break end
         if not hh.pureTweenFarm and not hh.autoFarmLoop and not hh.teleporting then break end
+        if root.Anchored then pcall(function() root.Anchored=false end) end
         if uid and (os.clock()-lastCheck>0.4) then
             lastCheck=os.clock()
             local ok,st=k4(uid)
@@ -1600,6 +1644,7 @@ l4=function(target,session)
             if conn then conn:Disconnect() end
             hb.WalkSpeed=savedWS; D4(); return false
         end
+        if root.Anchored then pcall(function() root.Anchored=false end) end
         local e2=os.clock()-t0
         local vel=root.AssemblyLinearVelocity
         local p2=root.Position
@@ -1631,6 +1676,7 @@ l4=function(target,session)
     hh.statusText="[5/7] Warping to Target Egg..."
     V4(tPos,8)
     ch:PivotTo(tCF*CFrame.new(0,0.4,0))
+    _G._KerryHubSelfAnchor=true
     root.Anchored=true
     for _,d in ipairs(ch:GetDescendants()) do
         if d:IsA("BasePart") then d.AssemblyLinearVelocity=Vector3.zero; d.AssemblyAngularVelocity=Vector3.zero end
@@ -1644,9 +1690,11 @@ l4=function(target,session)
     end
     task.wait(0.06)
     root.Anchored=false
+    _G._KerryHubSelfAnchor=false
     hb:ChangeState(Enum.HumanoidStateType.Running)
     local ok=U4(uid,tCF,target.Model,session)
     root.Anchored=false
+    _G._KerryHubSelfAnchor=false
     hb:ChangeState(Enum.HumanoidStateType.Running)
     for _,d in ipairs(ch:GetDescendants()) do
         if d:IsA("BasePart") then d.AssemblyLinearVelocity=Vector3.zero; d.AssemblyAngularVelocity=Vector3.zero end
@@ -1833,6 +1881,9 @@ y.Heartbeat:Connect(function()
         for _,it in ipairs(ch:GetChildren()) do if it:IsA("Tool") then hasTool=true; break end end
         if hasTool then u4() end
     end
+    if (hh.pureTweenFarm or hh.autoFarmLoop) and root.Anchored and not _G._KerryHubSelfAnchor then
+        pcall(function() root.Anchored=false end)
+    end
     if hh.pureTweenFarm or hh.autoFarmLoop or hh.teleporting or hh.glidingToTarget or hh.delivering or hh.securingEgg or hh.isReturning then return end
     if hh.alive and hh.autoGlide and carrying and not a4() and pos.X>SAFE_ZONE_X+50 then
         task.spawn(function() s4(hh.glideSpeed); u4(); hh.isReturning=false; hh.delivering=false end)
@@ -1939,4 +1990,4 @@ AddButton(movementPage,"Unload Script","Terminate all farm loops and close inter
     if ScreenGui then ScreenGui:Destroy() end
 end)
 
-warn("[KerryHub] Loaded. Minimize button = '—', Restore icon = 'K'.")
+warn("[KerryHub] Loaded. Anti-Anchored fix active.")
