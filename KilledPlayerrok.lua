@@ -1,4 +1,3 @@
-
 --[[
     KerryHub - Final
     Auto Steal + AntiCheat Bypass
