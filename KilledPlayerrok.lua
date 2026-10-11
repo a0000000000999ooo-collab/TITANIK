@@ -1,14 +1,3 @@
---[[
-    KerryHub - Clean AutoFarm + AntiCheat Build
-    Kept:
-    - Premium Interface (Menu)
-    - StealAutoFarm Full Engine (Auto Steal, Auto Place, Auto Hatch, Auto Treadmill, Auto Trails)
-    - AntiCheat Bypass (Desync Godmode, Anti-Ragdoll, TPWalk)
-    Removed:
-    - Visuals / Player / Settings pages
-    - Reset Character, Ultra Potato, Disable 3D, Anti-AFK, Unload Script
-]]--
-
 local e=game:GetService( "Players" )
 local r=game:GetService( "Workspace" )
 local y=game:GetService( "RunService" )
