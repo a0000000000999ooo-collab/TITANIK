@@ -1,7 +1,7 @@
 --[[
-    KerryHub - Trimmed Edition (FIXED)
+    KerryHub - Trimmed Edition (Forest Safe Zone + Angels & Demons)
     ONLY: Auto Steal (Egg) + AntiCheat Bypass
-    Fixed: Lua local scoping for X4 / O4 / Y4 / F4 / G4
+    Safe zone: Forest (первая локация)
 ]]--
 
 local e=game:GetService("Players")
@@ -129,7 +129,7 @@ TitleLabel.TextColor3=Color3.fromRGB(255,255,255); TitleLabel.TextSize=18; Title
 local SubtitleLabel=Instance.new("TextLabel",TopBar)
 SubtitleLabel.Size=UDim2.new(0,300,0,15); SubtitleLabel.Position=UDim2.new(0,20,0,30)
 SubtitleLabel.BackgroundTransparency=1; SubtitleLabel.Font=Enum.Font.GothamMedium
-SubtitleLabel.Text="Auto Steal Only - Advanced Farm"
+SubtitleLabel.Text="Auto Steal Only - Safe Zone: Forest"
 SubtitleLabel.TextColor3=Color3.fromRGB(150,150,175); SubtitleLabel.TextSize=11; SubtitleLabel.TextXAlignment=Enum.TextXAlignment.Left
 
 local CloseButton=Instance.new("TextButton",TopBar)
@@ -439,7 +439,7 @@ local function AddMultiDropdown(parentPage,title,options,selectedMap,callback)
 end
 
 -- ==========================================
--- AutoFarm Module (Steal-only, FIXED)
+-- AutoFarm Module (Safe Zone: Forest)
 -- ==========================================
 local AutoFarm=(function()
 local e=game:GetService("Players")
@@ -495,21 +495,44 @@ local R=J("RF/EggWorld/AskFieldEggSnapshot","AskFieldEggSnapshot") or J("Eggs: R
 local P=J("RE/GuardPatrol/ForestStrike","ForestStrike") or (B and B.GuardPatrol and B.GuardPatrol.ForestStrike)
 local N=J("SpeedTollOffer","RE/GuardPatrol/SpeedTollOffer") or (B and B.GuardPatrol and B.GuardPatrol.SpeedTollOffer)
 
--- Remote sanity check
 warn(string.format("[KerryHub] Remotes -> carry=%s snapshot=%s strike=%s toll=%s",
     tostring(i~=nil),tostring(R~=nil),tostring(P~=nil),tostring(N~=nil)))
 
-local f={["Light Dark"]=1300,["LightDark"]=1300,["Titan Temple"]=1100,["Cherry Blossom"]=1000,["Cosmic"]=900,
-["Prehistoric"]=800,["Abyss Ocean"]=700,["Volcano"]=600,["Snow"]=500,["Jungle"]=400,
-["Desert"]=300,["Lake"]=200,["Forest"]=100}
-local M={"Light Dark","Titan Temple","Cherry Blossom","Cosmic","Prehistoric","Abyss Ocean","Volcano","Snow","Jungle","Desert","Lake","Forest"}
-local I={["Light Dark"]=420,["LightDark"]=420,["Titan Temple"]=380,["Cherry Blossom"]=330,["Cosmic"]=280,
-["Prehistoric"]=240,["Abyss Ocean"]=200,["Volcano"]=180,["Snow"]=160,["Jungle"]=140,
-["Desert"]=130,["Lake"]=125,["Forest"]=125}
-local L=-360
-local E=525
-local b=620
-local A=130
+-- ==========================================
+-- ZONE WEIGHTS (Angels & Demons added)
+-- ==========================================
+local f={
+    ["Angels & Demons"]=1500,["Angels and Demons"]=1500,["AngelsDemons"]=1500,["Angels"]=1500,["Demons"]=1500,
+    ["Light Dark"]=1300,["LightDark"]=1300,
+    ["Titan Temple"]=1100,["Cherry Blossom"]=1000,["Cosmic"]=900,
+    ["Prehistoric"]=800,["Abyss Ocean"]=700,["Volcano"]=600,
+    ["Snow"]=500,["Jungle"]=400,["Desert"]=300,["Lake"]=200,["Forest"]=100
+}
+-- ==========================================
+-- ZONE LIST (Angels & Demons added)
+-- ==========================================
+local M={"Angels & Demons","Titan Temple","Cherry Blossom","Cosmic","Prehistoric","Abyss Ocean","Volcano","Snow","Jungle","Desert","Lake","Forest"}
+-- ==========================================
+-- ZONE SPEEDS (Angels & Demons added)
+-- ==========================================
+local I={
+    ["Angels & Demons"]=450,["Angels and Demons"]=450,["AngelsDemons"]=450,["Angels"]=450,["Demons"]=450,
+    ["Light Dark"]=420,["LightDark"]=420,["Titan Temple"]=380,["Cherry Blossom"]=330,["Cosmic"]=280,
+    ["Prehistoric"]=240,["Abyss Ocean"]=200,["Volcano"]=180,["Snow"]=160,["Jungle"]=140,
+    ["Desert"]=130,["Lake"]=125,["Forest"]=125
+}
+
+-- ==========================================
+-- SAFE ZONE CONFIG (Forest)
+-- ==========================================
+local SAFE_ZONE_X = 200          -- ⬅️ ЗАГЛУШКА! Реальный X в Forest подставь сам
+local SAFE_ZONE_LANE_Z = -360
+local SAFE_ZONE_Y = 70
+
+local L = SAFE_ZONE_LANE_Z
+local E = 525                    -- линия «безопасного коридора» (safe line) — оставил
+local b = 620
+local A = 130
 
 local Z="DiceHub_FlightSpeed.txt"
 local z="DiceHub_EggSelectConfig.json"
@@ -537,7 +560,7 @@ local function T()
             if raw and raw~="" then local d=a:JSONDecode(raw); if type(d)=="table" then e=d end end
         end
     end)
-    local dZ={["Light Dark"]=true,["Titan Temple"]=true,["Cherry Blossom"]=true,["Cosmic"]=false,
+    local dZ={["Angels & Demons"]=true,["Light Dark"]=true,["Titan Temple"]=true,["Cherry Blossom"]=true,["Cosmic"]=false,
     ["Prehistoric"]=false,["Abyss Ocean"]=false,["Volcano"]=false,["Snow"]=false,
     ["Jungle"]=false,["Desert"]=false,["Lake"]=false,["Forest"]=false}
     local dR={["Divine"]=true,["Eternal"]=true,["Secret"]=true,["Cosmic"]=true,["Mythic"]=true,
@@ -568,7 +591,7 @@ pureTweenFarm=false,autoFarmLoop=false,
 glidingToTarget=false,securingEgg=false,glideSpeed=O(),
 selectedZones=W.selectedZones,selectedRarities=W.selectedRarities,
 alwaysCollectSecretPlus=W.alwaysCollectSecretPlus,
-laneZ=-360,swapped=false,
+laneZ=SAFE_ZONE_LANE_Z,swapped=false,
 teleporting=false,isReturning=false,delivering=false,holdingEggForGuard=false,
 currentTargetModel=nil,targetPosition=nil,
 stateTime=os.clock(),statusText="Ready",alive=true}
@@ -600,7 +623,6 @@ local ek
 local h4
 local Dk
 local wk
--- ⬇️ FIXED: forwarded scoping for shared state
 local X4={}
 local O4=0
 local Y4="NONE"
@@ -944,6 +966,7 @@ Dk=function(name,x,z)
     local wl=string.lower(tostring(name or ""))
     local jl=string.lower(tostring(z or ""))
     if jl~="" and jl~="egg" then
+        if string.find(jl,"angel") or string.find(jl,"demon") or string.find(jl,"heaven") or string.find(jl,"hell") then return "Angels & Demons" end
         if string.find(jl,"spideron") or string.find(jl,"crustacia") or string.find(jl,"bladehide") or string.find(jl,"mantaris") or string.find(jl,"rhinotaur") or string.find(jl,"mutantshark") or string.find(jl,"gorillaking") or string.find(jl,"nightflame") then return "Titan Temple" end
         if string.find(jl,"crane") or string.find(jl,"salamander") or string.find(jl,"redpanda") or string.find(jl,"snowyowl") or string.find(jl,"koiegg") or string.find(jl,"stagegg") or string.find(jl,"onitiger") or string.find(jl,"kitsune") then return "Cherry Blossom" end
         if string.find(jl,"centapede") or string.find(jl,"cosmicgecko") or string.find(jl,"cosmicgorilla") or string.find(jl,"saturno") or string.find(jl,"saturnita") or string.find(jl,"vacca") or string.find(jl,"skeletonboss") or string.find(jl,"cosmicdragon") or string.find(jl,"lunardragon") or string.find(jl,"unicornegg") then return "Cosmic" end
@@ -956,6 +979,7 @@ Dk=function(name,x,z)
         if string.find(jl,"duckling") or string.find(jl,"catfish") or string.find(jl,"turtle") or string.find(jl,"trulimero") or string.find(jl,"trulicina") or string.find(jl,"swan") or string.find(jl,"axolotl") or string.find(jl,"leviathan") then return "Lake" end
         if string.find(jl,"burrowing owl") or string.find(jl,"brr brr") or string.find(jl,"patapim") or string.find(jl,"chicken") or string.find(jl,"dog") or string.find(jl,"bird") or string.find(jl,"raccoon") or string.find(jl,"fox") then return "Forest" end
     end
+    if (string.find(wl,"angel") or string.find(wl,"demon")) then return "Angels & Demons" end
     if (string.find(wl,"light") and string.find(wl,"dark")) or wl=="lightdark" then return "Light Dark"
     elseif string.find(wl,"titan") then return "Titan Temple"
     elseif string.find(wl,"cherry") then return "Cherry Blossom"
@@ -969,7 +993,8 @@ Dk=function(name,x,z)
     elseif string.find(wl,"lake") or string.find(wl,"water") then return "Lake"
     elseif string.find(wl,"forest") then return "Forest" end
     if ux>0 then
-        if ux>=5200 then return "Light Dark"
+        if ux>=5500 then return "Angels & Demons"   -- ⬅️ ЗАГЛУШКА! Замени 5500 на реальный X
+        elseif ux>=5200 then return "Light Dark"
         elseif ux>=4750 then return "Titan Temple"
         elseif ux>=4000 then return "Cherry Blossom"
         elseif ux>=3350 then return "Cosmic"
@@ -1009,7 +1034,7 @@ N4=function()
     if not list or #list==0 then return nil end
     local ch=o.Character
     local root=ch and ch:FindFirstChild("HumanoidRootPart")
-    local myPos=root and root.Position or Vector3.new(525,70,-360)
+    local myPos=root and root.Position or Vector3.new(SAFE_ZONE_X,SAFE_ZONE_Y,SAFE_ZONE_LANE_Z)
     local function scoreOf(rec)
         local rt=rec.RarityTier or 0
         local zw=rec.ZoneWeight or 50
@@ -1033,12 +1058,12 @@ N4=function()
             end
         end
         local joined=string.lower(string.format("%s %s %s",tostring(cat or ""),tostring(rec.Uid or ""),tostring(rec.Name or "")))
-        if string.find(joined,"nightflame") or string.find(joined,"unicornegg") or string.find(joined,"kitsune") or string.find(joined,"elmaja") then return 6,"Divine" end
-        if string.find(joined,"gorillaking") or string.find(joined,"lunardragon") or string.find(joined,"onitiger") or string.find(joined,"mosasaurus") then return 5,"Eternal" end
-        if string.find(joined,"mutantshark") or string.find(joined,"skeletonboss") or string.find(joined,"stagegg") or string.find(joined,"cosmicdragon") or string.find(joined,"trex") or string.find(joined,"tralaledon") or string.find(joined,"kraken") then return 4,"Secret" end
-        if string.find(joined,"saturnita") or string.find(joined,"saturno") or string.find(joined,"mantaris") or string.find(joined,"rhinotaur") or string.find(joined,"snowyowl") or string.find(joined,"koiegg") or string.find(joined,"triceratops") or string.find(joined,"bronto") or string.find(joined,"whaleshark") or string.find(joined,"belugawhale") then return 3,"Cosmic" end
-        if string.find(joined,"bladehide") or string.find(joined,"redpanda") or string.find(joined,"cosmicgorilla") or string.find(joined,"ankylosaurus") then return 2,"Mythic" end
-        if string.find(joined,"spideron") or string.find(joined,"crustacia") or string.find(joined,"salamander") or string.find(joined,"cosmicgecko") or string.find(joined,"pterodactyl") then return 1,"Legendary" end
+        if string.find(joined,"nightflame") or string.find(joined,"unicornegg") or string.find(joined,"kitsune") or string.find(joined,"elmaja") or string.find(joined,"archangel") or string.find(joined,"worldburner") then return 6,"Divine" end
+        if string.find(joined,"gorillaking") or string.find(joined,"lunardragon") or string.find(joined,"onitiger") or string.find(joined,"mosasaurus") or string.find(joined,"pegasus") or string.find(joined,"skeletonhorse") then return 5,"Eternal" end
+        if string.find(joined,"mutantshark") or string.find(joined,"skeletonboss") or string.find(joined,"stagegg") or string.find(joined,"cosmicdragon") or string.find(joined,"trex") or string.find(joined,"tralaledon") or string.find(joined,"kraken") or string.find(joined,"gargoyle") or string.find(joined,"razorfang") or string.find(joined,"centaur") or string.find(joined,"purejellyfish") then return 4,"Secret" end
+        if string.find(joined,"saturnita") or string.find(joined,"saturno") or string.find(joined,"mantaris") or string.find(joined,"rhinotaur") or string.find(joined,"snowyowl") or string.find(joined,"koiegg") or string.find(joined,"triceratops") or string.find(joined,"bronto") or string.find(joined,"whaleshark") or string.find(joined,"belugawhale") or string.find(joined,"imp") or string.find(joined,"demonhound") or string.find(joined,"sacredmoth") or string.find(joined,"holypeacock") then return 3,"Cosmic" end
+        if string.find(joined,"bladehide") or string.find(joined,"redpanda") or string.find(joined,"cosmicgorilla") or string.find(joined,"ankylosaurus") or string.find(joined,"toro") or string.find(joined,"wingedlamb") then return 2,"Mythic" end
+        if string.find(joined,"spideron") or string.find(joined,"crustacia") or string.find(joined,"salamander") or string.find(joined,"cosmicgecko") or string.find(joined,"pterodactyl") or string.find(joined,"flamesprite") or string.find(joined,"lightdove") then return 1,"Legendary" end
         if string.find(joined,"crane") or string.find(joined,"centapede") or string.find(joined,"swordfish") then return 0.5,"Epic" end
         if string.find(joined,"dodo") or string.find(joined,"parrotfish") then return 0.3,"Rare" end
         return F[extra or "Common"] or 0, extra or "Common"
@@ -1266,10 +1291,10 @@ t4=function(targetPos,speed,uid,session)
     local ch=o.Character
     local root=ch and ch:FindFirstChild("HumanoidRootPart")
     if root then
-        if root.Position.X<=535 and targetPos.Position.X>510 then
-            local wp=CFrame.new(500,70,-364)
+        if root.Position.X<=SAFE_ZONE_X+35 and targetPos.Position.X>SAFE_ZONE_X-10 then
+            local wp=CFrame.new(SAFE_ZONE_X+20,SAFE_ZONE_Y,SAFE_ZONE_LANE_Z)
             if (root.Position-wp.Position).Magnitude>5 then
-                h.statusText="[AutoSteal] Exiting base -> waypoint (500,70,-364)..."
+                h.statusText="[AutoSteal] Exiting Forest -> waypoint..."
                 local ok=wk(wp,speed,uid,session)
                 if not ok then return false end
                 task.wait(0.04)
@@ -1279,23 +1304,26 @@ t4=function(targetPos,speed,uid,session)
     return wk(targetPos,speed,uid,session)
 end
 
+-- ==========================================
+-- RETURN TO FOREST (safe zone)
+-- ==========================================
 s4=function(speed,session)
     local ch=o.Character
     local root=ch and ch:FindFirstChild("HumanoidRootPart")
     local hh=ch and ch:FindFirstChildOfClass("Humanoid")
     if not root then return false end
     if hh then hh.AutoRotate=false end
-    local lane=h.laneZ or L
-    local dest=Vector3.new(E-10,70,lane)
+    local lane=h.laneZ or SAFE_ZONE_LANE_Z
+    local dest=Vector3.new(SAFE_ZONE_X,SAFE_ZONE_Y,lane)
     speed=math.max(100,speed or h.glideSpeed or 350)
     h.isReturning=true; h.stateTime=os.clock()
-    V4(Vector3.new(E,70,lane),20)
+    V4(dest,20)
     pcall(u4)
     root.AssemblyLinearVelocity=Vector3.zero
     root.AssemblyAngularVelocity=Vector3.zero
     local fast=o4()
     local sp=math.max(speed,fast)
-    local deadline=os.clock()+15
+    local deadline=os.clock()+20
     while h.alive and h.isReturning and os.clock()<deadline do
         if session and O4~=session then
             if hh then hh.AutoRotate=true end
@@ -1307,16 +1335,10 @@ s4=function(speed,session)
         end
         local pos=root.Position
         local dist=(dest-pos).Magnitude
-        if pos.X<=E+10 or dist<=6 then pcall(u4); break end
+        if dist<=8 then pcall(u4); break end
         local dt=y.Heartbeat:Wait()
         pos=root.Position
         local curSp=sp
-        if pos.X<=b and pos.X>E then
-            local r=math.clamp((pos.X-E)/(b-E),0,1)
-            curSp=A+((sp-A)*r)
-        elseif pos.X<=E then
-            curSp=A
-        end
         local sx=math.sign(dest.X-pos.X)*math.min(math.abs(dest.X-pos.X),curSp*dt)
         local nX=pos.X+sx
         local sy=math.sign(dest.Y-pos.Y)*math.min(math.abs(dest.Y-pos.Y),(curSp*dt)*0.5)
@@ -1340,15 +1362,15 @@ s4=function(speed,session)
         root.CFrame=CFrame.lookAt(tgt,tgt+dir)
         root.AssemblyLinearVelocity=Vector3.zero
         root.AssemblyAngularVelocity=Vector3.zero
-        h.statusText=trap and string.format("Tweening Safe Line (Z: %.0f) [DODGING!]",nZ) or string.format("Tweening to Safe Line (%.0f studs | X: %.0f)",dist,pos.X)
+        h.statusText=trap and string.format("Tweening Forest (Z: %.0f) [DODGING!]",nZ) or string.format("Tweening Forest (%.0f studs | X: %.0f)",dist,pos.X)
     end
-    root.CFrame=CFrame.new(E,math.max(68,root.Position.Y),lane)
+    root.CFrame=CFrame.new(SAFE_ZONE_X,math.max(SAFE_ZONE_Y-2,root.Position.Y),lane)
     root.AssemblyLinearVelocity=Vector3.zero
     root.AssemblyAngularVelocity=Vector3.zero
     if hh then hh.AutoRotate=true end
     pcall(u4)
     h.isReturning=false
-    h.statusText="Arrived at Safe Line (X=525)!"
+    h.statusText="Arrived at Forest (Safe Zone)!"
     return true
 end
 
@@ -1435,7 +1457,7 @@ U4=function(uid,targetCF,targetModel,session)
     if session and O4~=session then return false end
     if ok then
         pcall(u4)
-        h.statusText="Egg Secured! Tweening along Z=-360..."
+        h.statusText="Egg Secured! Returning to Forest..."
     else
         h.statusText="[-] Failed to re-grab egg"
         if uid then X4[uid]=os.clock()+2 end
@@ -1622,7 +1644,7 @@ task.spawn(function()
                                 if secured then
                                     pcall(u4)
                                     if h.autoGlide then
-                                        h.statusText="[AutoSteal] Secured! Returning to Safe Line..."
+                                        h.statusText="[AutoSteal] Secured! Returning to Forest..."
                                         s4(h.glideSpeed,mySession)
                                         pcall(u4)
                                     end
@@ -1678,7 +1700,7 @@ task.spawn(function()
                             if secured then
                                 pcall(u4)
                                 if h.autoGlide then
-                                    h.statusText="[SnipeLoop] Target secured! Returning..."
+                                    h.statusText="[SnipeLoop] Target secured! Returning to Forest..."
                                     s4(h.glideSpeed,mySession)
                                     pcall(u4)
                                 end
@@ -1720,7 +1742,7 @@ y.Heartbeat:Connect(function()
     local pos=root.Position
     local carrying=w4()
     if pos.Y<45 then
-        root.CFrame=CFrame.new(pos.X,72,pos.Z)
+        root.CFrame=CFrame.new(pos.X,SAFE_ZONE_Y,pos.Z)
         root.AssemblyLinearVelocity=Vector3.zero
         return
     end
@@ -1730,7 +1752,7 @@ y.Heartbeat:Connect(function()
         if hasTool then u4() end
     end
     if h.pureTweenFarm or h.autoFarmLoop or h.teleporting or h.glidingToTarget or h.delivering or h.securingEgg or h.isReturning then return end
-    if h.alive and h.autoGlide and carrying and not a4() and pos.X>E then
+    if h.alive and h.autoGlide and carrying and not a4() and pos.X>SAFE_ZONE_X+50 then
         task.spawn(function() s4(h.glideSpeed); u4(); h.isReturning=false; h.delivering=false end)
     end
 end)
@@ -1781,15 +1803,15 @@ task.spawn(function()
     end
 end)
 
-AddToggle(autoFarmPage,"Auto Steal (Tween)","Smoothly fly to steal eggs continuously along Z=-360 highway",h.pureTweenFarm==true,function(state)
+AddToggle(autoFarmPage,"Auto Steal (Tween)","Smoothly fly to steal eggs (safe zone: Forest)",h.pureTweenFarm==true,function(state)
     if state then AutoFarm.SetFarmMode("TWEEN"); Notify("AutoSteal","Tween Farm Started",2)
     else AutoFarm.SetFarmMode("NONE"); Notify("AutoSteal","Tween Farm Stopped",2) end
 end)
-AddToggle(autoFarmPage,"Auto Steal (Teleport)","Instantly warp to steal target eggs in rapid loop",h.autoFarmLoop==true,function(state)
+AddToggle(autoFarmPage,"Auto Steal (Teleport)","Instantly warp to steal target eggs (safe zone: Forest)",h.autoFarmLoop==true,function(state)
     if state then AutoFarm.SetFarmMode("WARP"); Notify("AutoSteal","Teleport Farm Started",2)
     else AutoFarm.SetFarmMode("NONE"); Notify("AutoSteal","Teleport Farm Stopped",2) end
 end)
-AddToggle(autoFarmPage,"Auto Return","Automatically fly back to safe line (X=525) after stealing",h.autoGlide~=false,function(state)
+AddToggle(autoFarmPage,"Auto Return","Automatically fly back to Forest after stealing",h.autoGlide~=false,function(state)
     h.autoGlide=state
     Notify("AutoSteal","Auto Return set to: "..tostring(state),2)
 end)
