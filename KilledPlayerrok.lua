@@ -1,218 +1,307 @@
+-- KerryHub | Menu + AutoFarm + Auto Teleport
+-- LocalScript для Roblox Studio
+
 local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local CoreGui = game:GetService("CoreGui")
 
-local LocalPlayer = Players.LocalPlayer
-local Camera = Workspace.CurrentCamera
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
 
-local parentGui = (pcall(function() return gethui() end) and gethui()) or CoreGui
-
-if parentGui:FindFirstChild("KerryHubScreenGui") then
-    parentGui.KerryHubScreenGui:Destroy()
+local oldGui = playerGui:FindFirstChild("KerryHub")
+if oldGui then
+    oldGui:Destroy()
 end
 
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "KerryHubScreenGui"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = parentGui
+local gui = Instance.new("ScreenGui")
+gui.Name = "KerryHub"
+gui.ResetOnSpawn = false
+gui.Parent = playerGui
 
--- Состояние скрипта
-local FarmState = {
-    pureTweenFarm = false,
-    autoFarmLoop = false,
-    autoGlide = true,
-    glideSpeed = 600,
-    laneZ = -360,
-    godmode = true,
-    swapped = false,
-    alive = true,
-    statusText = "Ready"
+local main = Instance.new("Frame")
+main.Name = "Main"
+main.Size = UDim2.new(0, 500, 0, 320)
+main.Position = UDim2.new(0.5, -250, 0.5, -160)
+main.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+main.BorderSizePixel = 0
+main.Active = true
+main.Parent = gui
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 10)
+mainCorner.Parent = main
+
+-- Заголовок
+local header = Instance.new("TextLabel")
+header.Size = UDim2.new(1, -45, 0, 45)
+header.Position = UDim2.new(0, 15, 0, 0)
+header.BackgroundTransparency = 1
+header.Text = "KerryHub"
+header.TextColor3 = Color3.fromRGB(120, 170, 255)
+header.Font = Enum.Font.GothamBold
+header.TextSize = 22
+header.TextXAlignment = Enum.TextXAlignment.Left
+header.Parent = main
+
+-- Кнопка закрытия
+local close = Instance.new("TextButton")
+close.Size = UDim2.new(0, 32, 0, 32)
+close.Position = UDim2.new(1, -40, 0, 7)
+close.BackgroundColor3 = Color3.fromRGB(170, 55, 65)
+close.Text = "X"
+close.TextColor3 = Color3.new(1, 1, 1)
+close.Font = Enum.Font.GothamBold
+close.TextSize = 16
+close.Parent = main
+
+Instance.new("UICorner", close).CornerRadius = UDim.new(0, 6)
+
+close.MouseButton1Click:Connect(function()
+    gui:Destroy()
+end)
+
+-- Перетаскивание окна
+local dragging = false
+local dragStart
+local startPosition
+
+header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+
+        dragging = true
+        dragStart = input.Position
+        startPosition = main.Position
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (
+        input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch
+    ) then
+        local delta = input.Position - dragStart
+
+        main.Position = UDim2.new(
+            startPosition.X.Scale,
+            startPosition.X.Offset + delta.X,
+            startPosition.Y.Scale,
+            startPosition.Y.Offset + delta.Y
+        )
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
+-- Боковое меню
+local sidebar = Instance.new("Frame")
+sidebar.Position = UDim2.new(0, 10, 0, 55)
+sidebar.Size = UDim2.new(0, 145, 1, -65)
+sidebar.BackgroundColor3 = Color3.fromRGB(27, 27, 38)
+sidebar.BorderSizePixel = 0
+sidebar.Parent = main
+
+Instance.new("UICorner", sidebar).CornerRadius = UDim.new(0, 8)
+
+local content = Instance.new("Frame")
+content.Position = UDim2.new(0, 165, 0, 55)
+content.Size = UDim2.new(1, -175, 1, -65)
+content.BackgroundColor3 = Color3.fromRGB(27, 27, 38)
+content.BorderSizePixel = 0
+content.Parent = main
+
+Instance.new("UICorner", content).CornerRadius = UDim.new(0, 8)
+
+local function makeButton(parent, text, position, size)
+    local button = Instance.new("TextButton")
+    button.Position = position
+    button.Size = size
+    button.BackgroundColor3 = Color3.fromRGB(45, 48, 65)
+    button.BorderSizePixel = 0
+    button.Text = text
+    button.TextColor3 = Color3.fromRGB(240, 240, 245)
+    button.Font = Enum.Font.Gotham
+    button.TextSize = 14
+    button.Parent = parent
+
+    Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
+
+    return button
+end
+
+local function makeLabel(parent, text, position, size)
+    local label = Instance.new("TextLabel")
+    label.Position = position
+    label.Size = size
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Color3.fromRGB(235, 235, 245)
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 14
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = parent
+
+    return label
+end
+
+local tabs = {
+    "AutoFarm",
+    "Teleport",
+    "Diagnostics"
 }
 
--- Ремоты
-local function GetRemote(name)
-    local pkg = ReplicatedStorage:FindFirstChild("Packages") and ReplicatedStorage.Packages:FindFirstChild("Networking") or ReplicatedStorage:FindFirstChild("Network") or ReplicatedStorage
-    return pkg:FindFirstChild(name, true) or ReplicatedStorage:FindFirstChild(name, true)
-end
+local pages = {}
+local showPage
 
-local RF_Carry = GetRemote("AskFieldEggCarry")
-local RF_Snapshot = GetRemote("AskFieldEggSnapshot") or GetRemote("RequestAreaEggSnapshot")
-local RE_Strike = GetRemote("ForestStrike")
+for _, tabName in ipairs(tabs) do
+    local page = Instance.new("Frame")
+    page.Name = tabName
+    page.Size = UDim2.new(1, -20, 1, -20)
+    page.Position = UDim2.new(0, 10, 0, 10)
+    page.BackgroundTransparency = 1
+    page.Visible = false
+    page.Parent = content
 
--- Быстрый прок промтов
-pcall(function()
-    game:GetService("ProximityPromptService").PromptButtonHoldBegan:Connect(function(prompt)
-        if typeof(fireproximityprompt) == "function" then
-            fireproximityprompt(prompt)
-        end
+    pages[tabName] = page
+
+    local tabButton = makeButton(
+        sidebar,
+        tabName,
+        UDim2.new(0, 8, 0, 10 + (#pages - 1) * 45),
+        UDim2.new(1, -16, 0, 36)
+    )
+
+    tabButton.MouseButton1Click:Connect(function()
+        showPage(tabName)
     end)
+end
+
+showPage = function(name)
+    for pageName, page in pairs(pages) do
+        page.Visible = pageName == name
+    end
+end
+
+-- Состояние функций
+local autoFarmEnabled = false
+local autoTeleportEnabled = false
+
+-- Подключи сюда разрешённую механику фарма своей игры.
+local function AutoFarmStep()
+    -- TODO: логика сбора предметов для собственной игры
+end
+
+-- Подключи сюда разрешённую механику телепорта своей игры.
+local function TeleportToTarget()
+    -- TODO: телепорт к разрешённой цели в собственной игре
+end
+
+-- Вкладка AutoFarm
+makeLabel(
+    pages.AutoFarm,
+    "Автофарм",
+    UDim2.new(0, 5, 0, 5),
+    UDim2.new(1, -10, 0, 25)
+)
+
+local farmButton = makeButton(
+    pages.AutoFarm,
+    "AutoFarm: OFF",
+    UDim2.new(0, 5, 0, 40),
+    UDim2.new(1, -10, 0, 38)
+)
+
+farmButton.MouseButton1Click:Connect(function()
+    autoFarmEnabled = not autoFarmEnabled
+
+    farmButton.Text = autoFarmEnabled
+        and "AutoFarm: ON"
+        or "AutoFarm: OFF"
+
+    farmButton.BackgroundColor3 = autoFarmEnabled
+        and Color3.fromRGB(45, 120, 80)
+        or Color3.fromRGB(45, 48, 65)
 end)
 
--- Обход Античита (Bypass)
-local function TriggerAntiCheatBypass()
-    local char = LocalPlayer.Character
-    if char then
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        local root = char:FindFirstChild("HumanoidRootPart")
-        if root and hum then
-            Camera.CameraType = Enum.CameraType.Custom
-            Camera.CameraSubject = root
-            hum:Destroy()
-        end
-    end
-end
+-- Вкладка Teleport
+makeLabel(
+    pages.Teleport,
+    "Автотелепорт",
+    UDim2.new(0, 5, 0, 5),
+    UDim2.new(1, -10, 0, 25)
+)
 
-local function SwapHumanoid()
-    local char = LocalPlayer.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    if not char or not hum then return end
-    pcall(function()
-        hum.BreakJointsOnDeath = false
-        local clone = hum:Clone()
-        clone.Parent = char
-        hum:Destroy()
-        Camera.CameraSubject = clone
-        clone:ChangeState(Enum.HumanoidStateType.Running)
-    end)
-    FarmState.swapped = true
-end
+local teleportButton = makeButton(
+    pages.Teleport,
+    "Auto Teleport: OFF",
+    UDim2.new(0, 5, 0, 40),
+    UDim2.new(1, -10, 0, 38)
+)
 
--- Поиск яиц на карте
-local function GetBestEgg()
-    local areaSlots = Workspace:FindFirstChild("AreaEggSlotsClient")
-    if not areaSlots then return nil end
-    for _, slot in ipairs(areaSlots:GetChildren()) do
-        local pivot = slot:GetPivot()
-        if slot.Name and slot.Name ~= "" then
-            return {
-                Uid = slot.Name,
-                CFrame = pivot,
-                Position = pivot.Position,
-                Model = slot
-            }
-        end
-    end
-    return nil
-end
+teleportButton.MouseButton1Click:Connect(function()
+    autoTeleportEnabled = not autoTeleportEnabled
 
--- Логика движения к яйцу
-local function FlyToEgg(targetCF, speed)
-    local char = LocalPlayer.Character
-    local root = char and char:FindFirstChild("HumanoidRootPart")
-    if not root then return false end
-    
-    speed = math.max(100, speed or FarmState.glideSpeed)
-    local targetPos = targetCF.Position
-    local startTime = os.clock()
-    
-    while FarmState.alive and (os.clock() - startTime < 12) do
-        local currentPos = root.Position
-        local dist = (targetPos - currentPos).Magnitude
-        if dist <= 6 then break end
-        
-        local dt = RunService.Heartbeat:Wait()
-        local moveDir = (targetPos - currentPos).Unit
-        root.CFrame = root.CFrame + (moveDir * math.min(dist, speed * dt))
-        root.AssemblyLinearVelocity = Vector3.zero
-    end
-    
-    root.CFrame = targetCF * CFrame.new(0, 0.4, 0)
-    root.AssemblyLinearVelocity = Vector3.zero
-    return true
-end
+    teleportButton.Text = autoTeleportEnabled
+        and "Auto Teleport: ON"
+        or "Auto Teleport: OFF"
 
--- Поклев/забор яйца
-local function SecureEgg(egg)
-    if not egg then return false end
-    if not FarmState.swapped then SwapHumanoid() end
-    
-    if RF_Carry then
-        pcall(function()
-            if RF_Carry:IsA("RemoteFunction") then
-                RF_Carry:InvokeServer({ Uid = egg.Uid })
-            else
-                RF_Carry:FireServer({ Uid = egg.Uid })
-            end
-        end)
-    end
-    return true
-end
+    teleportButton.BackgroundColor3 = autoTeleportEnabled
+        and Color3.fromRGB(45, 120, 80)
+        or Color3.fromRGB(45, 48, 65)
+end)
 
--- Циклы фармов
+-- Вкладка Diagnostics
+makeLabel(
+    pages.Diagnostics,
+    "Диагностика персонажа",
+    UDim2.new(0, 5, 0, 5),
+    UDim2.new(1, -10, 0, 25)
+)
+
+local diagnosticsLabel = makeLabel(
+    pages.Diagnostics,
+    "Нажми кнопку для проверки.",
+    UDim2.new(0, 5, 0, 40),
+    UDim2.new(1, -10, 0, 55)
+)
+
+local diagnosticsButton = makeButton(
+    pages.Diagnostics,
+    "Проверить персонажа",
+    UDim2.new(0, 5, 0, 100),
+    UDim2.new(1, -10, 0, 38)
+)
+
+diagnosticsButton.MouseButton1Click:Connect(function()
+    local character = player.Character
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+    local root = character and character:FindFirstChild("HumanoidRootPart")
+
+    diagnosticsLabel.Text = string.format(
+        "Персонаж: %s\nHumanoid: %s\nRootPart: %s",
+        character and "найден" or "не найден",
+        humanoid and "найден" or "не найден",
+        root and "найден" or "не найден"
+    )
+end)
+
+-- Цикл переключателей
 task.spawn(function()
-    while FarmState.alive do
-        if FarmState.pureTweenFarm then
-            local egg = GetBestEgg()
-            if egg then
-                FarmState.statusText = "Flying to Egg..."
-                if FlyToEgg(egg.CFrame, FarmState.glideSpeed) then
-                    SecureEgg(egg)
-                    FarmState.statusText = "Secured!"
-                end
-            else
-                FarmState.statusText = "Scanning for eggs..."
-            end
+    while gui.Parent do
+        if autoFarmEnabled then
+            pcall(AutoFarmStep)
         end
-        task.wait(0.2)
+
+        if autoTeleportEnabled then
+            pcall(TeleportToTarget)
+        end
+
+        task.wait(0.25)
     end
 end)
 
-task.spawn(function()
-    while FarmState.alive do
-        if FarmState.autoFarmLoop then
-            local egg = GetBestEgg()
-            if egg then
-                FarmState.statusText = "Warping to Egg..."
-                local char = LocalPlayer.Character
-                local root = char and char:FindFirstChild("HumanoidRootPart")
-                if root then
-                    root.CFrame = egg.CFrame * CFrame.new(0, 0.4, 0)
-                    SecureEgg(egg)
-                    FarmState.statusText = "Warp Secured!"
-                end
-            else
-                FarmState.statusText = "Searching for targets..."
-            end
-        end
-        task.wait(0.2)
-    end
-end)
-
--- UI Сборка
-local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 340, 0, 260)
-MainFrame.Position = UDim2.new(0.5, -170, 0.5, -130)
-MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
-MainFrame.Parent = ScreenGui
-
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 10)
-UICorner.Parent = MainFrame
-
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -40, 0, 40)
-Title.Position = UDim2.new(0, 15, 0, 0)
-Title.Text = "KerryHub - Steal An Egg"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 16
-Title.Font = Enum.Font.GothamBold
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.BackgroundTransparency = 1
-Title.Parent = MainFrame
-
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -35, 0, 5)
-CloseBtn.Text = "×"
-CloseBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-CloseBtn.TextSize = 20
-CloseBtn.BackgroundTransparency = 1
-CloseBtn.Parent = MainFrame
-CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
-
-local StatusLabel = Instance.new("TextLabel")
-StatusLabel.
+showPage("AutoFarm")
