@@ -1,4 +1,4 @@
---[[
+-[[
     KerryHub - Final
     Auto Steal + AntiCheat Bypass
     Safe Zone: Forest (576.7, 70.6, -368.1)
@@ -1431,6 +1431,163 @@ s4=function(speed,session)
             if hb.WalkSpeed<=0 then hb.WalkSpeed=16 end
         end
         antiRagdoll(ch)
+    end)
+
+    -- 2) ПАУЗА — даём серверу подтвердить pickup яйца (ГЛАВНЫЙ ФИКС)
+    hh.statusText="[Escape] Syncing with server..."
+    task.wait(0.5)
+
+    -- Ещё раз сброс на всякий
+    pcall(function()
+        local r0=o.Character and o.Character:FindFirstChild("HumanoidRootPart")
+        if r0 then r0.Anchored=false end
+    end)
+
+    -- 3) ПОДЪЁМ НА +10 studs (медленнее, чтобы сервер не ругался)
+    local HIGH_Y = SAFE_ZONE_Y + 10
+    hh.statusText="[Escape] Rising +10 studs..."
+    local curX = root.Position.X
+    local liftPos = Vector3.new(curX, HIGH_Y, SAFE_ZONE_LANE_Z)
+    pcall(function() o:RequestStreamAroundAsync(liftPos) end)
+    for i=1,3 do
+        if session and O4~=session then break end
+        pcall(function()
+            local r2=o.Character and o.Character:FindFirstChild("HumanoidRootPart")
+            if r2 then
+                r2.Anchored=false
+                r2.CFrame=CFrame.new(liftPos)
+                r2.AssemblyLinearVelocity=Vector3.zero
+                r2.AssemblyAngularVelocity=Vector3.zero
+            end
+        end)
+        task.wait(0.05)
+    end
+    task.wait(0.15)  -- пауза после подъёма
+
+    -- 4) ESCAPE-JUMP от босса
+    hh.statusText="[Escape] Jumping away from boss..."
+    local cx=(o.Character and o.Character:FindFirstChild("HumanoidRootPart") and o.Character.HumanoidRootPart.Position.X) or curX
+    local escapeX=math.max(SAFE_ZONE_X, cx-600)
+    local escapePos=Vector3.new(escapeX, HIGH_Y, SAFE_ZONE_LANE_Z)
+    pcall(function() o:RequestStreamAroundAsync(escapePos) end)
+    for i=1,3 do
+        if session and O4~=session then break end
+        pcall(function()
+            local r2=o.Character and o.Character:FindFirstChild("HumanoidRootPart")
+            if r2 then
+                r2.Anchored=false
+                r2.CFrame=CFrame.new(escapePos)
+                r2.AssemblyLinearVelocity=Vector3.zero
+                r2.AssemblyAngularVelocity=Vector3.zero
+            end
+        end)
+        task.wait(0.05)
+    end
+    task.wait(0.2)  -- пауза после escape-jump
+
+    -- 5) ХОПЫ (с увеличенными задержками, чтобы сервер успевал)
+    local myX=(o.Character and o.Character:FindFirstChild("HumanoidRootPart") and o.Character.HumanoidRootPart.Position.X) or escapeX
+    local startIdx=#HOP_POINTS
+    for idx,point in ipairs(HOP_POINTS) do
+        if myX>=point.X-200 then startIdx=idx; break end
+    end
+    hh.statusText=string.format("Hop (high) from idx %d -> Forest...",startIdx)
+
+    for idx=startIdx,#HOP_POINTS do
+        if not hh.alive then break end
+        if session and O4~=session then break end
+        if not hh.pureTweenFarm and not hh.autoFarmLoop then break end
+
+        local point=HOP_POINTS[idx]
+        local isLast=(idx==#HOP_POINTS)
+        local targetY=isLast and SAFE_ZONE_Y or HIGH_Y
+        local targetPos=Vector3.new(point.X, targetY, point.Z or SAFE_ZONE_LANE_Z)
+        pcall(function() o:RequestStreamAroundAsync(targetPos) end)
+
+        pcall(function()
+            if _G._KerryHubSelfAnchor then _G._KerryHubSelfAnchor=false end
+            local r2=o.Character and o.Character:FindFirstChild("HumanoidRootPart")
+            if r2 then
+                r2.Anchored=false
+                r2.CFrame=CFrame.new(targetPos)
+                r2.AssemblyLinearVelocity=Vector3.zero
+                r2.AssemblyAngularVelocity=Vector3.zero
+            end
+            if hb then
+                if hb.PlatformStand then hb.PlatformStand=false end
+                if hb.Sit then hb.Sit=false end
+                hb:ChangeState(Enum.HumanoidStateType.Running)
+            end
+        end)
+        task.wait(0.08)
+        pcall(function()
+            local r2=o.Character and o.Character:FindFirstChild("HumanoidRootPart")
+            if r2 then
+                r2.CFrame=CFrame.new(targetPos)
+                r2.AssemblyLinearVelocity=Vector3.zero
+                r2.AssemblyAngularVelocity=Vector3.zero
+            end
+        end)
+        if isLast then
+            hh.statusText="Descending to Forest (normal height)..."
+        else
+            hh.statusText=string.format("Hop %d/%d (X=%.0f, Y=%.0f)",idx,#HOP_POINTS,point.X,HIGH_Y)
+        end
+        task.wait(0.25)  -- УВЕЛИЧЕННАЯ ЗАДЕРЖКА между хопами (было 0.12)
+    end
+
+    -- 6) Финальная фиксация
+    task.wait(0.15)
+    pcall(function()
+        local r2=o.Character and o.Character:FindFirstChild("HumanoidRootPart")
+        if r2 then
+            r2.Anchored=false
+            r2.CFrame=CFrame.new(SAFE_ZONE_X,SAFE_ZONE_Y,SAFE_ZONE_LANE_Z)
+            r2.AssemblyLinearVelocity=Vector3.zero
+            r2.AssemblyAngularVelocity=Vector3.zero
+        end
+        if hb then hb.AutoRotate=true end
+    end)
+
+    -- 7) ФИНАЛЬНАЯ ВЕРИФИКАЦИЯ — яйцо реально в бэкпаке?
+    task.wait(0.4)
+    local bagCount = y4()
+    local stillHaveEgg = false
+    pcall(function()
+        -- Проверяем через бэкпак: там есть хоть один Tool, который m()==true
+        local bp = o:FindFirstChild("Backpack")
+        if bp then
+            for _, it in ipairs(bp:GetChildren()) do
+                if m(it) then stillHaveEgg = true; break end
+            end
+        end
+    end)
+
+    -- Убираем инструменты из рук ТОЛЬКО после верификации
+    pcall(u4)
+
+    hh.isReturning=false
+    if stillHaveEgg then
+        hh.statusText=string.format("Arrived at Forest! (Bag: %d)",bagCount)
+        return true
+    else
+        hh.statusText="WARNING: Egg not confirmed, retry..."
+        return false
+    end
+end
+
+    hh.isReturning=true; hh.stateTime=os.clock()
+
+    -- 1) Сброс ступора
+    pcall(function()
+        if _G._KerryHubSelfAnchor then _G._KerryHubSelfAnchor=false end
+        root.Anchored=false
+        if hb then
+            hb.PlatformStand=false; hb.Sit=false
+            hb:ChangeState(Enum.HumanoidStateType.Running)
+            if hb.WalkSpeed<=0 then hb.WalkSpeed=16 end
+        end
+        antiRagdoll(ch)
         u4()
     end)
 
@@ -1625,10 +1782,15 @@ U4=function(uid,targetCF,targetModel,session)
         end
         y.Heartbeat:Wait()
     end
-    local ok=j4(uid)
-    if not ok then task.wait(0.12); ok=j4(uid) end
-    hh.currentTargetModel=nil; hh.targetPosition=nil; hh.securingEgg=false; hh.holdingEggForGuard=false
-    if session and O4~=session then return false end
+    -- Ждём серверного подтверждения pickup (до 1.5с)
+local ok=false
+local waitDeadline=os.clock()+1.5
+while os.clock()<waitDeadline do
+    if j4(uid) and w4(uid) then ok=true; break end
+    task.wait(0.05)
+end
+hh.currentTargetModel=nil; hh.targetPosition=nil; hh.securingEgg=false; hh.holdingEggForGuard=false
+if session and O4~=session then return false end
     if ok then
         pcall(u4)
         hh.statusText="Egg Secured! Returning to Forest..."
@@ -1873,10 +2035,13 @@ task.spawn(function()
                             local secured=l4(target,mySession)
                             if O4~=mySession or not hh.autoFarmLoop or Y4~="WARP" then return end
                             if secured then
-                                pcall(u4)
-                                hh.statusText="[SnipeLoop] Target secured! Returning to Forest..."
-                                s4(hh.glideSpeed,mySession)
-                                pcall(u4)
+                                if secured then
+    hh.statusText="[AutoSteal] Secured! Returning to Forest..."
+    local returnOk = s4(hh.glideSpeed,mySession)
+    if not returnOk then
+        -- Возврат не подтвердил яйцо — сбрасываем, пробуем следующее
+        pcall(D4)
+    end
                                 hh.isReturning=false
                             else
                                 if O4==mySession and hh.autoFarmLoop and Y4=="WARP" then
